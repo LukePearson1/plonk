@@ -30,7 +30,7 @@ pub(crate) fn dummy_gadget(n: usize, composer: &mut StandardComposer) {
 
 /// Takes a generic gadget function with no auxillary input and
 /// tests whether it passes an end-to-end test
-pub(crate) fn gadget_tester(
+pub fn gadget_tester(
     gadget: fn(composer: &mut StandardComposer),
     n: usize,
 ) -> Result<(), Error> {
