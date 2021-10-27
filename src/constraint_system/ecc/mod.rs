@@ -137,7 +137,7 @@ impl StandardComposer {
     /// The `bit` used as input which is a [`Variable`] should had previously
     /// been constrained to be either 1 or 0 using a bool constrain. See:
     /// [`StandardComposer::boolean_gate`].
-    fn conditional_select_identity(
+    pub fn conditional_select_identity(
         &mut self,
         bit: Variable,
         point_b: Point,
