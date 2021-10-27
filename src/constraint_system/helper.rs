@@ -12,6 +12,7 @@ use dusk_bls12_381::BlsScalar;
 use rand_core::OsRng;
 
 /// Adds dummy constraints using arithmetic gates
+#[allow(unused)]
 pub(crate) fn dummy_gadget(n: usize, composer: &mut StandardComposer) {
     let one = BlsScalar::one();
 

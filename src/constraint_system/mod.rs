@@ -19,8 +19,8 @@ mod boolean;
 pub mod ecc;
 
 #[cfg(feature = "std")]
-#[cfg(test)]
-pub(crate) mod helper;
+/// Some helper for testing
+pub mod helper;
 /// XOR and AND gates
 pub mod logic;
 /// Range gate
