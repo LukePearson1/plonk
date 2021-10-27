@@ -4,6 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use core::ops::Neg;
+
 use crate::constraint_system::ecc::Point;
 use crate::constraint_system::StandardComposer;
 use dusk_bls12_381::BlsScalar;
@@ -82,6 +84,21 @@ impl StandardComposer {
         self.n += 1;
 
         Point { x: x_3, y: y_3 }
+    }
+
+    /// Negate a point in circuit. 
+    pub fn point_negation_gate(
+        &mut self,
+        point: Point,
+    ) -> Point {
+        let x = point.x;
+        let y = point.y;
+
+        // negation of point (x, y) is (-x, y)
+        let x_1_neg = self.add((BlsScalar::one().neg(), x), (BlsScalar::zero(), self.zero_var), BlsScalar::zero(), None);
+        
+        Point { x: x_1_neg, y }
+
     }
 }
 
@@ -235,6 +252,26 @@ mod test {
 
                 composer
                     .assert_equal_public_point(point.into(), expected_point);
+            },
+            2000,
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_point_negation() {
+        let res = gadget_tester(
+            |composer| {
+                let point: JubJubAffine =
+                    (JubJubExtended::from(GENERATOR)
+                        + JubJubExtended::from(GENERATOR))
+                    .into();
+                let point_var = composer.add_affine(point);
+                let point_var_negated = composer.point_negation_gate(point_var);
+                let point_expected_negated = point.neg();
+
+
+                composer.assert_equal_public_point(point_var_negated, point_expected_negated);
             },
             2000,
         );
