@@ -20,6 +20,9 @@ pub struct Point {
 }
 
 impl Point {
+    /// Return a new point given the x and y coordinates
+    pub fn new(x: Variable, y: Variable) -> Self { Self { x, y } }
+
     /// Returns an identity point
     pub fn identity(composer: &mut StandardComposer) -> Point {
         let one = composer.add_witness_to_circuit_description(BlsScalar::one());
