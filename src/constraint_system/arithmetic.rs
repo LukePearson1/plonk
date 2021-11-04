@@ -4,6 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+// use core::ffi::VaList;
+
 use crate::constraint_system::StandardComposer;
 use crate::constraint_system::Variable;
 use dusk_bls12_381::BlsScalar;
@@ -311,6 +313,119 @@ impl StandardComposer {
 
         self.big_mul_gate(a, b, c, Some(d), q_m, q_o, q_c, q_4, pi)
     }
+
+    // /// Adds a width-4 arithmetic ate.
+    // /// This gate gives total freedom to the end user to implement the
+    // /// corresponding circuits, including the 4th selector wire in the
+    // /// most optimized way possible because the under has access to the
+    // /// whole set of variables, as well as selector coefficients that
+    // /// take part in the computation of the gate equation
+    // /// equation.
+    // ///
+    // /// The final constraint added will force the following:
+    // /// `(a * b) * q_m + a * q_l + b * q_r + q_4 * w_4 + q_c + PI = w_o
+    // /// 0`.
+    // pub fn big_arith(
+    //     &mut self,
+    //     q_l_a: (BlsScalar, Variable), 
+    //     q_r_b: (BlsScalar, Variable), 
+    //     q_4_d: Option<(BlsScalar, Variable)>,
+    //     q_c: BlsScalar,
+    //     pi: Option<BlsScalar>,
+    // ) -> Variable {
+    //     // Check if advice wire has a value
+    //     let (q_4, d) = match q_4_d {
+    //         Some((q_4, var)) => (q_4, var),
+    //         None => (BlsScalar::zero(), self.zero_var),
+    //     };
+
+    //     let (q_l, a) = q_l_a;
+    //     let (q_r, b) = q_r_b;
+
+    //     let q_o = -BlsScalar::one();
+
+
+    //     // Compute the output wire
+    //     self.q_m.push(q_m);
+    //     self.q_o.push(q_o);
+    //     self.q_c.push(q_c);
+    //     self.q_4.push(q_4);
+    //     self.q_arith.push(BlsScalar::one());
+
+    //     self.q_range.push(BlsScalar::zero());
+    //     self.q_logic.push(BlsScalar::zero());
+    //     self.q_fixed_group_add.push(BlsScalar::zero());
+    //     self.q_variable_group_add.push(BlsScalar::zero());
+
+    //     if let Some(pi) = pi {
+    //         assert!(
+    //             self.public_inputs_sparse_store.insert(self.n, pi).is_none(),"The invariant of already having a PI inserted for this position should never exist"
+    //         );
+    //     }
+
+    //     self.perm.add_variables_to_map(a, b, c, Some(d),  self.n);
+
+    //     self.n += 1;
+
+    //     c
+    // }
+
+    /// This gates turns on all the selctor polynomials to give users,
+    /// in some situations, the ability to use the extra selector for 
+    /// more variables into additions
+    pub fn big_arith_gate(
+        &mut self,
+        a: Variable,
+        b: Variable,
+        c: Variable,
+        d: Option<Variable>,
+        q_m: BlsScalar,
+        q_l: BlsScalar,
+        q_r: BlsScalar,
+        q_o: BlsScalar,
+        q_c: BlsScalar,
+        q_4: BlsScalar,
+        pi: Option<BlsScalar>,
+    ) -> Variable {
+        // Check if advice wire has a value
+        let d = match d {
+            Some(var) => var,
+            None => self.zero_var,
+        };
+
+        self.w_l.push(a);
+        self.w_r.push(b);
+        self.w_o.push(c);
+        self.w_4.push(d);
+
+        // Add selector vectors
+        self.q_m.push(q_m);
+        self.q_o.push(q_o);
+        self.q_c.push(q_c);
+        self.q_4.push(q_4);
+        self.q_l.push(q_l);
+        self.q_r.push(q_r);
+        self.q_arith.push(BlsScalar::one());
+        
+
+        self.q_range.push(BlsScalar::zero());
+        self.q_logic.push(BlsScalar::zero());
+        self.q_fixed_group_add.push(BlsScalar::zero());
+        self.q_variable_group_add.push(BlsScalar::zero());
+
+        if let Some(pi) = pi {
+            assert!(
+                self.public_inputs_sparse_store.insert(self.n, pi).is_none(),"The invariant of already having a PI inserted for this position should never exist"
+            );
+        }
+
+        self.perm.add_variables_to_map(a, b, c, d, self.n);
+
+        self.n += 1;
+
+        c
+    }
+    
 }
 
 #[cfg(feature = "std")]
@@ -513,5 +628,33 @@ mod tests {
             200,
         );
         assert!(res.is_err());
+    }
+    #[test]
+    fn test_big_arith_gate() {
+        let res = gadget_tester(
+            |composer| {
+                let seven = composer.add_input(BlsScalar::from(7));
+                let four = composer.add_input(BlsScalar::from(4));
+                let six = composer.add_input(BlsScalar::from(6));
+                let forty_five = composer.add_input(BlsScalar::from(45));
+
+                composer.big_arith_gate(
+                    four,
+                    seven,
+                    forty_five,
+                    Some(six),
+                    BlsScalar::one(),
+                    BlsScalar::one(),
+                    BlsScalar::one(),
+                    BlsScalar::one(),
+                    BlsScalar::one(),
+                    BlsScalar::one(),
+                    None,
+                );
+                composer.constrain_to_constant(c, BlsScalar::from(45), None)
+            },
+            32,
+        );
+        assert!(res.is_ok())
     }
 }
