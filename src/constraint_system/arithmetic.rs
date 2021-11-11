@@ -633,25 +633,23 @@ mod tests {
     fn test_big_arith_gate() {
         let res = gadget_tester(
             |composer| {
-                let seven = composer.add_input(BlsScalar::from(7));
                 let four = composer.add_input(BlsScalar::from(4));
-                let six = composer.add_input(BlsScalar::from(6));
-                let forty_five = composer.add_input(BlsScalar::from(45));
+                let one = composer.add_input(BlsScalar::one());
 
-                composer.big_arith_gate(
+                let c = composer.big_arith_gate(
+                    one,
+                    one,
                     four,
-                    seven,
-                    forty_five,
-                    Some(six),
+                    Some(one),
                     BlsScalar::one(),
                     BlsScalar::one(),
                     BlsScalar::one(),
-                    BlsScalar::one(),
-                    BlsScalar::one(),
+                    -BlsScalar::one(),
+                    BlsScalar::zero(),
                     BlsScalar::one(),
                     None,
                 );
-                composer.constrain_to_constant(c, BlsScalar::from(45), None)
+                composer.constrain_to_constant(c, BlsScalar::from(4), None)
             },
             32,
         );
